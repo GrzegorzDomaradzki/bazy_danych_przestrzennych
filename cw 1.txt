@@ -29,7 +29,7 @@ id_pracownika SERIAL NOT NULL,
 imie TEXT NOT NULL,
 nazwisko TEXT NOT NULL,
 adres TEXT NOT NULL,
-telefon VARCHAR(12) NOT NULL
+telefon TEXT NOT NULL
 );
 
 CREATE TABLE firma.godziny(
@@ -360,6 +360,20 @@ DELETE FROM firma.pracownicy WHERE id_pracownika IN (
 
 ==================================================================
 8.
+a)
+UPDATE firma.pracownicy SET telefon = '+(48)' || telefon;
+
+==================================================================
+
+b)
+UPDATE firma.pracownicy SET telefon = CONCAT(LEFT(telefon, 5), ' ', SUBSTRING(telefon, 6, 3), '-', SUBSTRING(telefon, 9, 3), '-', RIGHT(telefon, 3));
+
+==================================================================
+c)
+SELECT UPPER(nazwisko) FROM firma.pracownicy ORDER BY LENGTH(nazwisko) DESC LIMIT 1;
+
+
+==================================================================
 d)
 SELECT a.id_pracownika, a.imie, a.nazwisko, md5(b.kwota::text)
 FROM firma.pracownicy a INNER JOIN(
@@ -369,6 +383,24 @@ FROM firma.pracownicy a INNER JOIN(
 ) b
 ON a.id_pracownika=b.id_pracownika;
 
-9.
+==================================================================
+9. Niestety z treści nie wynika jak piliczyć ile się dostaje za nadgodziny, wycinam tę część...
+SELECT
+    FORMAT('Pracownik %s %s, w dniu %s otrzymał pensję całkowitą na kwotę %s zł, gdzie wynagrodzeniezasadnicze wynosiło: %s zł, premia: %s zł.
+',b.imie, b.nazwisko, a.data, c.kwota+d.kwota, c.kwota, d.kwota) 
+FROM firma.wynagrodzenie a 
+INNER JOIN firma.pracownicy b
+ON a.id_pracownika=b.id_pracownika
 
-FORMAT('Pracownik %s %s, w dniu %s trzymał pensję całkowitą na kwotę %i zł, gdzie wynagrodzeniezasadnicze wynosiło: %i zł, premia: %i zł, nadgodziny: %i zł.) full_name 
+INNER JOIN firma.pensja_stanowisko c
+ON a.id_pensji=c.id_pensji
+
+LEFT JOIN firma.premia d
+ON a.id_premii=d.id_premii;
+
+
+
+
+
+
+
