@@ -22,7 +22,7 @@ GRANT ALL ON SCHEMA firma TO write_user; // nie jest to część zadania, ale ni
 ================================================================
 4.Dodaj cztery tabele...
 
-Wprowadziłem małą modyfikację - zakładjąc, że pracownik w okresie rozliczeniowym pracuje więcej niż jednen dzień, prościej przypisać odniościk do wynagrodzenia w godzinach, niż na odwrót.
+Wprowadziłem małą modyfikację - zakładając, że pracownik w okresie rozliczeniowym pracuje więcej niż jednen dzień, prościej przypisać odnośnik do wynagrodzenia w godzinach, niż na odwrót.
 
 CREATE TABLE firma.pracownicy(
 id_pracownika SERIAL NOT NULL,
@@ -96,7 +96,7 @@ COMMENT ON TABLE firma.premia IS 'Premia do wynagrodzenia';
 COMMENT ON TABLE firma.wynagrodzenie IS 'Wynagrodzenie wypłacone danego dnia';
 ===================================
 f)
-Nie jest wymagane żadne dziaąłnie - domyśnie nie jest wyzwalane żadne działanie.
+Nie jest wymagane żadne działnie - domyśnie nie jest wyzwalana żadna akcja.
 ================================================================
 5.Wypełnij tabele treścią wg poniższego wzoru
 a)
@@ -121,7 +121,7 @@ b)
 ALTER TABLE firma.wynagrodzenie ALTER COLUMN data TYPE TEXT;
 
 ===================================
-c) /// Nie wiem czy to ma sens, być moze w zadaniu chodziło poprostu o włożenie rekordu z brak i kwotą 0.
+c) /// Nie wiem czy to ma sens, być moze w zadaniu chodziło po prostu o włożenie rekordu z 'brak' i kwotą 0.
 CREATE OR REPLACE FUNCTION firma.fun_premia()
 RETURNS trigger AS '
 BEGIN
@@ -384,7 +384,7 @@ FROM firma.pracownicy a INNER JOIN(
 ON a.id_pracownika=b.id_pracownika;
 
 ==================================================================
-9. Niestety z treści nie wynika jak piliczyć ile się dostaje za nadgodziny, wycinam tę część...
+9. Niestety z treści nie wynika jak policzyć ile się dostaje za nadgodziny, wycinam tę część...
 SELECT
     FORMAT('Pracownik %s %s, w dniu %s otrzymał pensję całkowitą na kwotę %s zł, gdzie wynagrodzeniezasadnicze wynosiło: %s zł, premia: %s zł.
 ',b.imie, b.nazwisko, a.data, c.kwota+d.kwota, c.kwota, d.kwota) 
