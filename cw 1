@@ -29,7 +29,7 @@ id_pracownika SERIAL NOT NULL,
 imie TEXT NOT NULL,
 nazwisko TEXT NOT NULL,
 adres TEXT NOT NULL,
-telefon VARCHAR(12) NOT NULL
+telefon TEXT NOT NULL
 );
 
 CREATE TABLE firma.godziny(
@@ -169,11 +169,11 @@ INSERT INTO  firma.wynagrodzenie(data, id_pracownika, id_pensji, id_premii) VALU
 ('31-01-2020',3,3,3),
 ('31-01-2020',4,2,4),
 ('31-01-2020',5,1,5),
-('31-01-2020',6,5,1),
-('31-01-2020',7,4,2),
+('31-01-2020',6,5,5),
+('31-01-2020',7,4,4),
 ('31-01-2020',8,3,3),
-('31-01-2020',9,2,4),
-('31-01-2020',10,1,5);
+('31-01-2020',9,2,2),
+('31-01-2020',10,1,1);
 
 
 INSERT INTO firma.godziny( data, liczba_godzin,id_pracownika, id_wynagrodzenie) VALUES
@@ -202,10 +202,205 @@ INSERT INTO firma.godziny( data, liczba_godzin,id_pracownika, id_wynagrodzenie) 
 6.
 a)
 SELECT id_pracownika, nazwisko FROM firma.pracownicy;
+================================================================
+b) nie wiem co to jest płaca - załóżmy, że jest to pensja... - ze względu na moje dane (każdy dostaje > 1000zł) poszukajmy kto zarabia > 2000
+
+SELECT a.id_pracownika
+FROM firma.pracownicy a INNER JOIN(
+    SELECT tb.id_pracownika FROM firma.pensja_stanowisko ta INNER JOIN
+    firma.wynagrodzenie tb
+    ON ta.id_pensji=tb.id_pensji 
+    WHERE ta.kwota>2000
+) b
+ON a.id_pracownika=b.id_pracownika;
+================================================================
+c)
+SELECT a.id_pracownika
+FROM firma.pracownicy a INNER JOIN(
+    SELECT tb.id_pracownika FROM firma.pensja_stanowisko ta INNER JOIN
+    firma.wynagrodzenie tb
+    ON ta.id_pensji=tb.id_pensji 
+    WHERE ta.kwota>2000
+    INTERSECT
+    SELECT tb.id_pracownika FROM firma.premia ta LEFT JOIN
+    firma.wynagrodzenie tb
+    ON ta.id_premii=tb.id_premii 
+    WHERE ta.kwota=0
+) b
+ON a.id_pracownika=b.id_pracownika;
+================================================================
+d)
+SELECT * FROM firma.pracownicy WHERE imie LIKE '%a' AND LOWER(nazwisko) LIKE '%n%';
 
 ================================================================
+e)
+SELECT * FROM firma.pracownicy WHERE imie LIKE 'J%'
+
+================================================================
+f) jako że nie miałem danych... To ustalmy normę na 8, a nie 160 godzin.
+SELECT a.imie, a.nazwisko, b.licz FROM
+firma.pracownicy a INNER JOIN(
+    SELECT ta.id_wynagrodzenie, ta.id_pracownika, SUM(ta.liczba_godzin) AS licz
+    FROM firma.godziny ta GROUP BY ta.id_wynagrodzenie, ta.id_pracownika) b
+ON a.id_pracownika=b.id_pracownika
+WHERE licz>8;
+
+
+================================================================
+g)
+
+SELECT a.imie, a.nazwisko
+FROM firma.pracownicy a INNER JOIN(
+    SELECT tb.id_pracownika FROM firma.pensja_stanowisko ta INNER JOIN
+    firma.wynagrodzenie tb
+    ON ta.id_pensji=tb.id_pensji 
+    WHERE ta.kwota>=1500 AND ta.kwota<=3000
+) b
+ON a.id_pracownika=b.id_pracownika;
+
+================================================================
+h)
+
+SELECT a.imie, a.nazwisko, b.licz FROM
+firma.pracownicy a INNER JOIN(
+    SELECT ta.id_wynagrodzenie, ta.id_pracownika, SUM(ta.liczba_godzin) AS licz
+    FROM firma.godziny ta INNER JOIN(
+        SELECT tb.id_pracownika FROM firma.premia ta LEFT JOIN
+        firma.wynagrodzenie tb
+        ON ta.id_premii=tb.id_premii 
+        WHERE ta.kwota=0) tb
+        ON ta.id_pracownika=tb.id_pracownika
+    GROUP BY ta.id_wynagrodzenie, ta.id_pracownika) b
+ON a.id_pracownika=b.id_pracownika
+WHERE licz>8;
+=================================================================
+7.
+a)
+SELECT a.id_pracownika, a.imie, a.nazwisko, b.kwota
+FROM firma.pracownicy a INNER JOIN(
+    SELECT tb.id_pracownika, ta.kwota FROM firma.pensja_stanowisko ta INNER JOIN
+    firma.wynagrodzenie tb
+    ON ta.id_pensji=tb.id_pensji 
+) b
+ON a.id_pracownika=b.id_pracownika
+ORDER BY b.kwota;
+
+=================================================================
 b)
+SELECT a.id_pracownika, a.imie, a.nazwisko, b.kwota, b.premia
+FROM firma.pracownicy a INNER JOIN(
+    SELECT tb.id_pracownika, ta.kwota, tc.kwota AS premia
+    FROM firma.wynagrodzenie tb
+        INNER JOIN firma.pensja_stanowisko ta  
+        ON ta.id_pensji=tb.id_pensji 
+        INNER JOIN firma.premia tc
+        ON tb.id_premii=tc.id_premii
+) b
+ON a.id_pracownika=b.id_pracownika
+ORDER BY b.kwota DESC, b.premia DESC;
 
-9.
+=================================================================
+c) w tej bazie danych możemy tylko sprawdzić na jaki stanowisku byli pracownicy odbierając ostatnią pensję. Nie przechowujemy nigdzie statusu zatrudnienia - możemy policzyć ile razy osoba x odebrała premie jako ktoś, ale nie możemy dokonać takiego zliczenia. Tu Zliczę po prostu pracowników któży dostali wypłatę w danej dacie i pogrupuje.
 
-FORMAT('Pracownik %s %s, w dniu %s trzymał pensję całkowitą na kwotę %i zł, gdzie wynagrodzeniezasadnicze wynosiło: %i zł, premia: %i zł, nadgodziny: %i zł.) full_name 
+SELECT b.stanowisko, count(b.stanowisko) 
+FROM firma.wynagrodzenie a INNER JOIN firma.pensja_stanowisko b
+ON a.id_pensji=b.id_pensji
+WHERE a.data LIKE '31-01-2020' GROUP BY b.stanowisko;
+
+==================================================================
+d)
+SELECT b.stanowisko, AVG(b.kwota+c.kwota), MIN(b.kwota+c.kwota),MAX(b.kwota+c.kwota) 
+FROM firma.wynagrodzenie a 
+INNER JOIN firma.pensja_stanowisko b
+ON a.id_pensji=b.id_pensji
+LEFT JOIN firma.premia c
+ON a.id_premii=c.id_premii
+WHERE b.stanowisko LIKE 'szef' GROUP BY b.stanowisko;
+
+==================================================================
+e)
+SELECT SUM(b.kwota+c.kwota) 
+FROM firma.wynagrodzenie a 
+INNER JOIN firma.pensja_stanowisko b
+ON a.id_pensji=b.id_pensji
+LEFT JOIN firma.premia c
+ON a.id_premii=c.id_premii;
+
+==================================================================
+f)
+SELECT b.stanowisko, SUM(b.kwota+c.kwota) 
+FROM firma.wynagrodzenie a 
+INNER JOIN firma.pensja_stanowisko b
+ON a.id_pensji=b.id_pensji
+LEFT JOIN firma.premia c
+ON a.id_premii=c.id_premii
+GROUP BY b.stanowisko;
+==================================================================
+g)
+SELECT b.stanowisko, COUNT(c.rodzaj) 
+FROM firma.wynagrodzenie a 
+INNER JOIN firma.pensja_stanowisko b
+ON a.id_pensji=b.id_pensji
+LEFT JOIN firma.premia c
+ON a.id_premii=c.id_premii
+WHERE c.rodzaj NOT LIKE 'brak' GROUP BY b.stanowisko;
+
+==================================================================
+h)
+DELETE FROM firma.pracownicy WHERE id_pracownika IN ( 
+    SELECT a.id_pracownika
+    FROM firma.pracownicy a INNER JOIN(
+        SELECT tb.id_pracownika FROM firma.pensja_stanowisko ta INNER JOIN
+        firma.wynagrodzenie tb
+        ON ta.id_pensji=tb.id_pensji 
+        WHERE ta.kwota<1200
+    ) b
+    ON a.id_pracownika=b.id_pracownika
+);
+
+==================================================================
+8.
+a)
+UPDATE firma.pracownicy SET telefon = '+(48)' || telefon;
+
+==================================================================
+
+b)
+UPDATE firma.pracownicy SET telefon = CONCAT(LEFT(telefon, 5), ' ', SUBSTRING(telefon, 6, 3), '-', SUBSTRING(telefon, 9, 3), '-', RIGHT(telefon, 3));
+
+==================================================================
+c)
+SELECT UPPER(nazwisko) FROM firma.pracownicy ORDER BY LENGTH(nazwisko) DESC LIMIT 1;
+
+
+==================================================================
+d)
+SELECT a.id_pracownika, a.imie, a.nazwisko, md5(b.kwota::text)
+FROM firma.pracownicy a INNER JOIN(
+    SELECT tb.id_pracownika, ta.kwota FROM firma.pensja_stanowisko ta INNER JOIN
+    firma.wynagrodzenie tb
+    ON ta.id_pensji=tb.id_pensji 
+) b
+ON a.id_pracownika=b.id_pracownika;
+
+==================================================================
+9. Niestety z treści nie wynika jak piliczyć ile się dostaje za nadgodziny, wycinam tę część...
+SELECT
+    FORMAT('Pracownik %s %s, w dniu %s otrzymał pensję całkowitą na kwotę %s zł, gdzie wynagrodzeniezasadnicze wynosiło: %s zł, premia: %s zł.
+',b.imie, b.nazwisko, a.data, c.kwota+d.kwota, c.kwota, d.kwota) 
+FROM firma.wynagrodzenie a 
+INNER JOIN firma.pracownicy b
+ON a.id_pracownika=b.id_pracownika
+
+INNER JOIN firma.pensja_stanowisko c
+ON a.id_pensji=c.id_pensji
+
+LEFT JOIN firma.premia d
+ON a.id_premii=d.id_premii;
+
+
+
+
+
+
+
