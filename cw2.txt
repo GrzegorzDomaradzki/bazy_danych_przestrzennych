@@ -1,0 +1,377 @@
+1 - 5. Zadania zawarte w pliku sql s298242_create_2020-10-14_14 07.sql wygenerowanym przez vertabelo.
+Następnie łączymy sie do bazy i uruchamiamy skrypt za pomocą
+\i <nazwa pliku>
+===================================================================
+6. Uzupełnij danymi:
+
+INSERT INTO sklep.producenci(nazwa_producenta, mail,telefon) VALUES 
+('owoce','owoce@mail.com','111111111'),
+('warzywa','warzywa@mail.com','211111111'),
+('mięso','mięso@mail.com','311111111'),
+('przyprawy','przyprawy@mail.com','411111111');
+
+INSERT INTO sklep.produkty(nazwa_produktu, cena,id_producenta) VALUES
+('jabłka', 4, 5),
+('gruszki', 5, 5),
+('śliwki', 8, 5),
+('truskawki', 10, 5),
+('czereśnie', 17, 5),
+('drób',12,7),
+('wieprzowina',19,7),
+('wołownina',35,7),
+('cebula',3,6),
+('papryka',8,6),
+('cukinia',9,6),
+('szarfan',100,8),
+('bazylia',30,8),
+('pieprz',25,8);
+
+INSERT INTO sklep.zamowienia(id_produktu, ilosc,data) VALUES
+(4,190,'1-01-2020'),
+(4,520,'8-01-2020'),
+(4,40,'15-01-2020'),
+(5,500,'1-01-2020'),
+(5,200,'8-01-2020'),
+(5,700,'15-01-2020'),
+(5,400,'16-01-2020'),
+(5,900,'20-01-2020'),
+(6,100,'1-01-2020'),
+(6,40,'8-01-2020'),
+(6,40,'15-01-2020'),
+(6,10,'1-01-2020'),
+(6,50,'8-01-2020'),
+(6,24,'15-01-2020'),
+(6,10,'16-01-2020'),
+(6,2,'20-01-2020'),
+(7,80,'1-01-2020'),
+(7,100,'8-01-2020'),
+(7,20,'15-01-2020'),
+(8,100,'1-01-2020'),
+(8,300,'8-01-2020'),
+(8,100,'15-01-2020'),
+(8,90,'16-01-2020'),
+(8,10,'20-01-2020'),
+(9,20,'1-01-2020'),
+(9,50,'8-01-2020'),
+(9,10,'15-01-2020'),
+(10,8,'1-01-2020'),
+(10,20,'8-01-2020'),
+(10,15,'15-01-2020'),
+(10,30,'16-01-2020'),
+(10,40,'20-01-2020'),
+
+
+(11,8,'1-01-2020'),
+(11,20,'8-01-2020'),
+(11,15,'15-01-2020'),
+(11,30,'20-01-2020'),
+
+(12,100,'1-01-2020'),
+(12,50,'8-01-2020'),
+(12,15,'15-01-2020'),
+(12,80,'16-01-2020'),
+(12,40,'20-01-2020'),
+
+(13,80,'1-01-2020'),
+(13,20,'8-01-2020'),
+(13,40,'20-01-2020'),
+
+(14,8,'1-01-2020'),
+(14,20,'8-01-2020'),
+
+
+(15,2,'1-01-2020'),
+(15,1,'8-01-2020'),
+(15,5,'15-01-2020'),
+
+
+(16,1,'1-01-2020'),
+(16,2,'8-01-2020'),
+(16,1,'15-01-2020'),
+(16,3,'16-01-2020'),
+(16,10,'20-01-2020'),
+
+(17,8,'1-01-2020'),
+(17,10,'16-01-2020'),
+(17,5,'20-01-2020');
+===================================================================
+7.
+\! pg_dump s298242 -f <scieżka>/db_copy.sql
+===================================================================
+8.
+DROP DATABASE s298242;
+===================================================================
+9.
+CREATE DATABASE backup_s298242;
+\! psql -d backup_s298242 -f <scieżka>/db_copy.sql
+===================================================================
+10.
+ALTER DATABASE backup_s298242 RENAME TO s298242;
+
+===================================================================
+11
+a)
+SELECT
+    FORMAT('Producent: %s, liczba_zamówień: %s, wartość_zamówienia: %s',b.nazwa_producenta,SUM(a.ilosc),SUM(a.ilosc*b.cena))
+FROM
+sklep.zamowienia a
+INNER JOIN
+(
+    SELECT a.id_produktu, a.cena, b.nazwa_producenta
+    FROM sklep.produkty a
+    INNER JOIN  sklep.producenci b
+    ON a.id_producenta=b.id_producenta
+     
+)
+b ON a.id_produktu=b.id_produktu
+GROUP BY b.nazwa_producenta;
+===================================================================
+b)
+SELECT
+    FORMAT('Produkt: %s, liczba_zamówień: %s',b.nazwa_produktu, SUM(a.ilosc))
+FROM
+sklep.zamowienia a
+INNER JOIN
+sklep.produkty
+b ON a.id_produktu=b.id_produktu
+GROUP BY b.nazwa_produktu;
+===================================================================
+c)
+SELECT * FROM sklep.produkty NATURAL JOIN sklep.zamowienia;
+===================================================================
+d)
+Uwzględniłem...
+===================================================================
+e) wszystkie moje transakce to styczeń - poszukajmy więc transakcji w pierwszym tygodniu zamiast tego
+SELECT * FROM sklep.zamowienia WHERE EXTRACT(WEEK FROM  data)=1;
+===================================================================
+f)
+SELECT EXTRACT(DOW FROM  data)AS day, SUM(ilosc) as sum FROM sklep.zamowienia GROUP BY day ORDER BY sum DESC;
+===================================================================
+g)
+SELECT
+    b.nazwa_produktu, SUM(a.ilosc) as sum
+FROM
+sklep.zamowienia a
+INNER JOIN
+sklep.produkty
+b ON a.id_produktu=b.id_produktu
+GROUP BY b.nazwa_produktu
+ORDER BY sum DESC;
+===================================================================
+12
+a) Aliasu nie będzie - alias w formacie mija się z celem.
+SELECT
+    FORMAT('Produkt %s, którego producentem jest %s, zamówiono %s razy',UPPER(b.nazwa_produktu),LOWER(b.nazwa_producenta),a.ilosc)
+FROM
+sklep.zamowienia a
+INNER JOIN
+(
+    SELECT a.id_produktu, b.nazwa_producenta, a.nazwa_produktu
+    FROM sklep.produkty a
+    INNER JOIN  sklep.producenci b
+    ON a.id_producenta=b.id_producenta
+     
+)
+b ON a.id_produktu=b.id_produktu
+ORDER BY a.ilosc DESC;
+===================================================================
+b)
+SELECT
+    a.data,b.nazwa_produktu,b.nazwa_producenta,a.ilosc*b.cena AS wartosc
+FROM
+sklep.zamowienia a
+INNER JOIN
+(
+    SELECT a.cena, a.id_produktu, b.nazwa_producenta, a.nazwa_produktu
+    FROM sklep.produkty a
+    INNER JOIN  sklep.producenci b
+    ON a.id_producenta=b.id_producenta
+     
+)
+b ON a.id_produktu=b.id_produktu
+ORDER BY wartosc
+OFFSET 3;
+===================================================================
+c)
+CREATE TABLE sklep.klienci(
+id_klienta SERIAL PRIMARY KEY,
+email TEXT,
+telefon TEXT
+);
+===================================================================
+d)
+INSERT INTO sklep.klienci(email, telefon) VALUES
+('klient1@mail.com','999999999'),
+('klient2@mail.com','899999999'),
+('klient3@mail.com','799999999'),
+('klient4@mail.com','699999999'),
+('klient5@mail.com','599999999');
+
+ALTER TABLE sklep.zamowienia ADD COLUMN id_klienta INTEGER;
+
+ALTER TABLE sklep.zamowienia ADD CONSTRAINT FK_KlienciZamowienia
+FOREIGN KEY (id_klienta) REFERENCES sklep.klienci(id_klienta);
+
+update sklep.klienci
+   set id_klienta = floor(random() * 4 + 1);
+===================================================================
+e)
+SELECT
+    a.id_klienta ,b.nazwa_produktu,a.ilosc,a.ilosc*b.cena AS wartosc_zamówienia
+FROM
+sklep.zamowienia a
+INNER JOIN
+(
+    SELECT a.cena, a.id_produktu, a.nazwa_produktu
+    FROM sklep.produkty a
+    INNER JOIN  sklep.producenci b
+    ON a.id_producenta=b.id_producenta
+     
+)
+b ON a.id_produktu=b.id_produktu
+ORDER BY a.id_klienta, wartosc_zamówienia;
+===================================================================
+f)
+(SELECT
+    FORMAT('NAJWIĘCEJ KUPUJĄCY: %s, ile towarów %s, wartość %s',a.id_klienta ,SUM(a.ilosc),SUM(a.ilosc*b.cena))
+FROM
+sklep.zamowienia a
+INNER JOIN
+(
+    SELECT a.cena, a.id_produktu
+    FROM sklep.produkty a
+    INNER JOIN  sklep.producenci b
+    ON a.id_producenta=b.id_producenta
+     
+)
+b ON a.id_produktu=b.id_produktu
+GROUP BY a.id_klienta
+ORDER BY SUM(a.ilosc) DESC
+LIMIT 1)
+UNION
+(SELECT
+    FORMAT('NAJMNIEJ KUPUJĄCY: %s, ile towarów %s, wartość %s',a.id_klienta ,SUM(a.ilosc),SUM(a.ilosc*b.cena))
+FROM
+sklep.zamowienia a
+INNER JOIN
+(
+    SELECT a.cena, a.id_produktu
+    FROM sklep.produkty a
+    INNER JOIN  sklep.producenci b
+    ON a.id_producenta=b.id_producenta
+     
+)
+b ON a.id_produktu=b.id_produktu
+GROUP BY a.id_klienta
+ORDER BY SUM(a.ilosc) ASC
+LIMIT 1);
+===================================================================
+g)
+DELETE FROM
+sklep.produkty WHERE id_produkt = 
+    (SELECT b.id_produktu FROM
+       sklep.zamowienia a RIGHT OUTER JOIN
+       sklep.produkty b
+       ON a.id_produktu = b.id_produktu
+       WHERE a.id_produktu IS NULL);
+===================================================================
+13
+a) 
+CREATE TABLE sklep.numer(
+liczba INTEGER
+);
+===================================================================
+b)
+CREATE SEQUENCE liczba_seq INCREMENT 5 MINVALUE 0 MAXVALUE 125 START 100 CYCLE;
+===================================================================
+c)
+DO
+$do$
+BEGIN 
+   FOR i IN 1..7 LOOP
+      INSERT INTO sklep.numer(liczba) VALUES (nextval('liczba_seq'));                    
+   END LOOP;
+END
+$do$;
+===================================================================
+d)
+ALTER SEQUENCE liczba_seq INCREMENT 6;
+===================================================================
+e)
+SELECT last_value FROM liczba_seq;
+SELECT last_value+increment_by FROM liczba_seq;
+===================================================================
+f)
+DROP SEQUENCE liczba_seq;
+===================================================================
+14.
+a)
+\du
+===================================================================
+b)
+CREATE USER Superuser298242 WITH SUPERUSER;
+CREATE USER Guest298242;
+GRANT CONNECT ON DATABASE s298242 TO Guest298242;
+GRANT USAGE ON SCHEMA public, firma, sklep TO Guest298242;
+GRANT SELECT ON ALL TABLES IN SCHEMA public, firma, sklep TO Guest298242;
+===================================================================
+c)
+REASSIGN OWNED BY Guest298242 TO Superuser298242;
+DROP OWNED BY Guest298242;
+ALTER USER Superuser298242 WITH NOSUPERUSER;
+DROP USER Guest298242;
+ALTER USER Superuser298242 RENAME TO student;
+GRANT CONNECT ON DATABASE s298242 TO student;
+GRANT USAGE ON SCHEMA public, firma, sklep TO student;
+GRANT SELECT ON ALL TABLES IN SCHEMA public, firma, sklep TO student;
+===================================================================
+15.
+a)
+BEGIN;
+UPDATE sklep.produkty SET cena=cena+CAST(10 AS money);
+COMMIT;
+===================================================================
+c) kod nie zadziała
+BEGIN;
+UPDATE sklep.produkty SET cena=cena*1.1 WHERE id_produktu=3;
+SAVEPOINT S1;
+UPDATE sklep.produkty SET cena=cena*1.25;
+SAVEPOINT S2;
+CREATE TABLE temp AS 
+    (SELECT id_klienta
+    FROM
+    sklep.zamowienia a
+    INNER JOIN
+    (
+        SELECT a.cena, a.id_produktu
+        FROM sklep.produkty a
+        INNER JOIN  sklep.producenci b
+        ON a.id_producenta=b.id_producenta
+     
+    )
+    b ON a.id_produktu=b.id_produktu
+    GROUP BY a.id_klienta
+    ORDER BY SUM(a.ilosc) DESC
+    LIMIT 1);
+UPDATE sklep.zamowienia SET id_klienta=NULL WHERE id_klienta = (SELECT * FROM temp);
+DELETE FROM sklep.klienci WHERE id_klienta =(SELECT * FROM temp);
+DROP TABLE temp;
+ROLLBACK TO SAVEPOINT S1;
+ROLLBACK TO SAVEPOINT S2;
+ROLLBACK;
+=========================================================================
+c)
+CREATE OR REPLACE FUNCTION sklep.udzial()
+RETURNS TABLE(opis TEXT) AS '
+BEGIN
+    RETURN QUERY SELECT 
+        FORMAT(''%s - %s%%'', produkty.nazwa_produktu, ROUND(100.0*SUM(zamowienia.ilosc)/(
+            SELECT SUM(ilosc) 
+            FROM sklep.zamowienia),2))
+        FROM sklep.zamowienia AS zamowienia
+        INNER JOIN sklep.produkty AS produkty 
+        ON zamowienia.id_produktu=produkty.id_produktu
+    GROUP BY produkty.nazwa_produktu;
+END' LANGUAGE 'plpgsql';
+
