@@ -50,10 +50,11 @@ WHERE a.name LIKE 'AMBLER' AND l.names LIKE 'Iliamna Lake';
 
 /*7*/
 
+
 SELECT SUM(ST_Area(ST_Intersection(t.geom, a.geom))) as areas, vegdesc 
 FROM trees t, (
     SELECT geom FROM tundra 
     UNION ALL 
     SELECT geom FROM swamp) a
-WHERE NOT ST_IsEmpty(ST_Intersection(t.geom, a.geom))
+WHERE ST_Intersects(t.geom, a.geom)
 GROUP BY t.vegdesc;
