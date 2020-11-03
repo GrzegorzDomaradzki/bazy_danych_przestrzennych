@@ -80,7 +80,7 @@ INSERT INTO obiekty(nazwa, geometria) VALUES
 (SELECT ST_Collect(a.geometria, b.geometria) FROM obiekty a, obiekty b WHERE a.nazwa='obiekt3' AND b.nazwa = 'obiekt4')
 );
 
-/*5 wynik będze niedkoładny - figury zamknięte definiowałem jako poligony, a HasArc nie potrafi rozpozanć krzywizn w poligonie. Nie istnieje proste rzutowanie z poligonu na multiline. Musiałbym pisać funkcję obsługującą inaczej wszystkie poligony, a to nie jest chyba cel zadania*/
+/*5 wynik będze niedokładny - figury zamknięte definiowałem jako poligony, a HasArc nie potrafi rozpozanć krzywizn w poligonie. Nie istnieje proste rzutowanie z poligonu na multiline. Musiałbym pisać funkcję obsługującą inaczej wszystkie poligony, a to nie jest chyba cel zadania*/
 SELECT ST_Area(ST_Buffer(geometria,5)) FROM obiekty where not ST_HasArc(geometria);
 
 
