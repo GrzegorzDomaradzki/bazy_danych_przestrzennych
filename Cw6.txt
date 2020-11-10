@@ -1,0 +1,57 @@
+1./////////////////////////////////////////////////////////
+
+Zmiana koloru.
+prawy przycisk myszy na warstwę trees -> właściwości -> styl -> wartość unikalna -> wybieramy VEGDESC -> klasyfikuj -> wybieramy kolory.
+
+Pole powierzchni
+Używam wtyczki Group Stats -> Uruchamiam wtyczkę, wybieram warstwę trees ->w Values przesuwam funkcję sum i pole AREA_KM2, a do Rows VEGDESC -> Calculate
+
+VEGDESC	None
+Deciduous	165377.798
+Evergreen	164578.91900000005
+Mixed Trees	189273.32699999996
+
+2./////////////////////////////////////////////////////////
+wektor -> podziel warstwę wektorową -> warstwa trees, pole z unikalnym id VEGDESC -> pliki zostaną stworzone we wskazanej lokalizacji (polecam zaznaczyć ignorowanie błędów) geometrii
+
+3./////////////////////////////////////////////////////////
+tabela warości regions -> wyszukujemy obszaer po nazwie -> kopiujemy do schowka -> edycja -> wklej obiekty jako -> nowa warstwa (wybieramy nazwę)
+wektor -> geoprocesing -> przytnij -> railroads i nasze nowe pole -> uruchom
+kalkulator pól -> $length -> 34883.24270922694
+
+4./////////////////////////////////////////////////////////
+Używam wtyczki Group Stats -> Uruchamiam wtyczkę, wybieram warstwę airports -> Rows to Use, a Values average i ELEV, filter ["USE"  LIKE 'Military']
+
+Military	593.25
+
+Jeżeli chodzi o ilości to zamiast average używamy count:
+
+Military	8
+
+Dopisujemy warunek "ELEV">1400 - mamy tylko jedno takie lotnisko.
+By je usunąć -> show selected on map -> włączamy tryb edycji -> usuń zaznaczone
+
+5./////////////////////////////////////////////////////////
+
+Wyodrębniamy obszar jako warstwa tak samo jak w zadaniu 3. Tak samo robimy przycięcie -> wynik to nasza table budynków w Bristol-Bay. (jest ich 11)
+
+100 km od rzek -> rivers -> bufor 100 km
+przycięcie poprzedniego obszaru i bufora to nasz wynik, ale widać, że wszytkie budynki jak i większość terenu alaski znajduje się bliżej niż 100 km od rzek.
+
+6./////////////////////////////////////////////////////////
+wektor -> narzędzia analizy -> przecięcia linii -> majrivers i railroads (przecięć jest 8)
+7./////////////////////////////////////////////////////////
+railroads -> wektor -> narzędzia geometrii -> wydobądź wieżchołki (jest ich 662)
+
+8./////////////////////////////////////////////////////////
+tworzymy bufory dla lotnisk i linii kolejowych (tak jak w zad 5)
+wektor -> narzędzia geoprocesingu -> różnica -> bufor lotnisk - bufor linii kolejowych.
+uzyskana geometria to rozwiązanie zadania - nie licząc odległości od dróg - nie mamy warstwy dróg.
+9./////////////////////////////////////////////////////////
+Bagna przed uproszczeniem
+- powierzchnia - 24719.761 km2
+- wierzchołki - 7 469
+
+Po uproszczeniu (uprość z tolerancą na 100. NA STO CZEGO? metrów, stóp? ...zakładam, że metrów)
+- powierzchnia - 24721.591 km2 - 1.830 km2 różnicy błąd pomijalny
+- wierzchołki - 6 175 - 1294 mniej - 17% redukcji.
