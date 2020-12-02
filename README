@@ -1,0 +1,2 @@
+Tabele union i intersection nie tworzą się poprawnie w systemie linux przez wzgląd na błędy w SRID (baza uważa, że są różne między tabelami mimo, że są takie same).
+Bajka z cylku - na Windowsie działa, ale wyłączam wyniki z tych tabel w screenie z FinalCheck.
